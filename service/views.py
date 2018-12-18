@@ -23,7 +23,6 @@ def account_suggest(request, id):
 
 
 @csrf_exempt
-@transaction.atomic
 @require_http_methods(['POST'])
 def account_create(request):
     body = json.loads(request.body.decode('utf-8'))
@@ -33,18 +32,18 @@ def account_create(request):
     likes = body.pop('likes', [])
 
     try:
-        account = ServiceFactory.create_account(body)
-        ServiceFactory.add_account_interests(account, interests)
-        ServiceFactory.add_account_likes(account, likes)
-        ServiceFactory.add_account_subscribe(account, premium)
-        return JsonResponse({}, safe=False, status=201)
+        with transaction.atomic():
+            account = ServiceFactory.create_account(body)
+            ServiceFactory.add_account_interests(account, interests)
+            ServiceFactory.add_account_likes(account, likes)
+            ServiceFactory.add_account_subscribe(account, premium)
+            return JsonResponse({}, safe=False, status=201)
     except Exception as e:
         print(e)
         return JsonResponse({}, safe=False, status=400)
 
 
 @csrf_exempt
-@transaction.atomic
 @require_http_methods(['POST'])
 def account_update(request, id):
     body = json.loads(request.body.decode('utf-8'))
@@ -60,7 +59,6 @@ def account_update(request, id):
 
 @csrf_exempt
 @require_http_methods(['POST'])
-@transaction.atomic
 def account_likes(request):
     body = json.loads(request.body.decode('utf-8'))
     try:
