@@ -3,29 +3,38 @@ from django.db import models
 
 class Account(models.Model):
     email = models.CharField(max_length=100, unique=True)
-    fname = models.CharField(max_length=50, default=None)
-    sname = models.CharField(max_length=50, default=None)
-    phone = models.CharField(max_length=16, default=None)
+    fname = models.CharField(max_length=50, blank=True)
+    sname = models.CharField(max_length=50, blank=True)
+    phone = models.CharField(max_length=16, blank=True)
     sex = models.CharField(max_length=1)
     birth = models.BigIntegerField(default=0)
-    country = models.CharField(max_length=50, default=None)
-    city = models.CharField(max_length=50, default=None)
+    country = models.CharField(max_length=50, blank=True)
+    city = models.CharField(max_length=50, blank=True)
     joined = models.BigIntegerField(default=0)
     status = models.CharField(max_length=20)
 
+    def __str__(self):
+        return '%s - %s' % (self.id, (self.fname + ' ' + self.sname))
 
-class Subscription(models.Model):
+
+class AccountSubscription(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     start = models.BigIntegerField()
     finish = models.BigIntegerField()
 
+    def __str__(self):
+        return 'start: %s, finish: %s' % (self.start, self.finish)
 
-class Sympathy(models.Model):
-    liker = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='sympathy_liker_account')
-    likee = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='sympathy_likee_account')
+
+class AccountSympathy(models.Model):
+    liker = models.BigIntegerField()
+    likee = models.BigIntegerField()
     ts = models.BigIntegerField()
 
+    def __str__(self):
+        return '%s - %s:%s' % (self.liker, self.likee, self.ts)
 
-class Interest(models.Model):
+
+class AccountInterest(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     label = models.CharField(max_length=100)
