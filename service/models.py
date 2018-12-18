@@ -38,3 +38,6 @@ class AccountSympathy(models.Model):
 class AccountInterest(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     label = models.CharField(max_length=100)
+
+    def __str__(self):
+        return '%s: %s' % (self.account, self.label)

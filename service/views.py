@@ -1,6 +1,8 @@
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from django.http import HttpResponse, JsonResponse
 from .service_factory import ServiceFactory
+from django.db import transaction
 import json
 
 
@@ -21,6 +23,8 @@ def account_suggest(request, id):
 
 
 @csrf_exempt
+@transaction.atomic
+@require_http_methods(['POST'])
 def account_create(request):
     body = json.loads(request.body.decode('utf-8'))
 
@@ -30,20 +34,38 @@ def account_create(request):
 
     try:
         account = ServiceFactory.create_account(body)
-        ServiceFactory.add_interests(account, interests)
-        ServiceFactory.add_likes(account.pk, likes)
-        ServiceFactory.add_subscribe(account, premium)
+        ServiceFactory.add_account_interests(account, interests)
+        ServiceFactory.add_account_likes(account, likes)
+        ServiceFactory.add_account_subscribe(account, premium)
         return JsonResponse({}, safe=False, status=201)
     except Exception as e:
         print(e)
         return JsonResponse({}, safe=False, status=400)
 
 
-
-
+@csrf_exempt
+@transaction.atomic
+@require_http_methods(['POST'])
 def account_update(request, id):
-    return HttpResponse('Account update endpoint: %s' % id)
+    body = json.loads(request.body.decode('utf-8'))
+    try:
+        if ServiceFactory.update_account(id, body) == 0:
+            return JsonResponse({}, safe=False, status=404)
+    except Exception as e:
+        print(e)
+        return JsonResponse({}, safe=False, status=400)
+
+    return JsonResponse({}, safe=False, status=202)
 
 
+@csrf_exempt
+@require_http_methods(['POST'])
+@transaction.atomic
 def account_likes(request):
-    return HttpResponse('Account likes endpoint')
+    body = json.loads(request.body.decode('utf-8'))
+    try:
+        ServiceFactory.bulk_create_likes(body['likes'])
+    except Exception as e:
+        print(e)
+        return JsonResponse({}, safe=False, status=400)
+    return JsonResponse({}, safe=False, status=202)
