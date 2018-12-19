@@ -2,7 +2,6 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from django.http import HttpResponse, JsonResponse
 from .service_factory import ServiceFactory
-from django.db import transaction
 import json
 
 
@@ -27,20 +26,13 @@ def account_suggest(request, id):
 def account_create(request):
     body = json.loads(request.body.decode('utf-8'))
 
-    interests = body.pop('interests', [])
-    premium = body.pop('premium', [])
-    likes = body.pop('likes', [])
-
     try:
-        with transaction.atomic():
-            account = ServiceFactory.create_account(body)
-            ServiceFactory.add_account_interests(account, interests)
-            ServiceFactory.add_account_likes(account, likes)
-            ServiceFactory.add_account_subscribe(account, premium)
-            return JsonResponse({}, safe=False, status=201)
+        ServiceFactory.create_account_with_relationships(body)
     except Exception as e:
         print(e)
         return JsonResponse({}, safe=False, status=400)
+
+    return JsonResponse({}, safe=False, status=201)
 
 
 @csrf_exempt
